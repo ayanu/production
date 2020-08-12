@@ -4,7 +4,7 @@ easyblock = 'PythonBundle'
 
 name = 'jupyterlab'
 version = '1.2.16'
-versionsuffix = '-cuda-%(cudashortver)s-batchspawner'
+versionsuffix = '-batchspawner'
 
 _pyminver = '6'
 
@@ -18,14 +18,13 @@ _jlshortver = '%s.%s' % (_jl_maj_ver, _jl_min_ver)
 homepage = 'https://github.com/jupyterlab/jupyterlab'
 description = "An extensible environment for interactive and reproducible computing, based on the Jupyter Notebook and Architecture."
 
-toolchain = {'name': 'CrayGNU', 'version': '19.10'}
+toolchain = {'name': 'CrayGNU', 'version': '20.06'}
 toolchainopts = {'pic': True, 'verbose': False}
 
 dependencies = [
-    ('cray-python/3.6.5.7', EXTERNAL_MODULE),
-    ('cudatoolkit/10.1.105_3.27-7.0.1.1_4.1__ga311ce7', EXTERNAL_MODULE),
+    ('cray-python', EXTERNAL_MODULE),
     ('libffi', '3.2.1', '', True),
-    ('JuliaExtensions', _jlver, '-cuda-%(cudashortver)s'),
+    ('JuliaExtensions', _jlver),
     ('IPython', '7.7.0', '-python%(pymajver)s'),
     ('configurable-http-proxy', '4.2.1'),
     ('dask', '2.2.0', '-python%(pymajver)s'),
@@ -34,7 +33,7 @@ dependencies = [
 
 exts_default_options = {
     'req_py_majver': '%(pymajver)s',
-    'req_py_minver': _pyminver,
+    'req_py_minver': '%(pyminver)s',
     'source_urls': [PYPI_SOURCE],
     'use_pip': True,
 }
@@ -63,14 +62,20 @@ exts_list = [
     ('webencodings', '0.5.1'),
     ('bleach', '3.1.0'),
     ('defusedxml', '0.6.0'),
-    ('entrypoints', '0.3'),
+    ('entrypoints', '0.3', {
+        'use_pip': False,
+        }),
     ('mistune', '0.8.4'),
     ('nbformat', '4.4.0'),
     ('pandocfilters', '1.4.2'),
-    ('testpath', '0.4.2'),
+    ('testpath', '0.4.2', {
+        'use_pip': False,
+        }),
     ('nbconvert', '5.5.0'),
     ('prometheus_client', '0.7.1'),
-    ('terminado', '0.8.2'),
+    ('terminado', '0.8.2', {
+        'use_pip': False,
+        }),
     ('jupyterlab_server', '1.0.0'),
     ('ipykernel', '5.1.1'),
     ('notebook', '6.0.0'),
@@ -96,7 +101,6 @@ exts_list = [
         'modulename': "OpenSSL",
         }),
     ('certipy', '0.1.3'),
-    ('entrypoints', '0.3'),
     ('oauthlib', '3.0.2'),
     ('pamela', '1.0.0'),
     ('urllib3', '1.25.3'),
@@ -120,22 +124,23 @@ exts_list = [
     ('colorcet', '2.0.2'),
     ('zstandard', '0.13.0'),
     ('itk-core', '5.0.1', {
-        'source_tmpl': 'itk_core-%(version)s-cp36-cp36m-manylinux1_x86_64.whl',
+        'source_tmpl': 'itk_core-%(version)s-cp%(pymajver)s%(pyminver)s-cp%(pymajver)s%(pyminver)s-manylinux1_x86_64.whl',
         'unpack_sources': False,
         'modulename': 'itk',
         }),
     ('itk-numerics', '5.0.1', {
-        'source_tmpl': 'itk_numerics-%(version)s-cp36-cp36m-manylinux1_x86_64.whl',
+        'source_tmpl': 'itk_numerics-%(version)s-cp%(pymajver)s%(pyminver)s-cp%(pymajver)s%(pyminver)s-manylinux1_x86_64.whl',
         'unpack_sources': False,
         'modulename': 'itk'
         }),
     ('itk-filtering', '5.0.1', {
-        'source_tmpl': 'itk_filtering-%(version)s-cp36-cp36m-manylinux1_x86_64.whl',
+        'source_tmpl': 'itk_filtering-%(version)s-cp%(pymajver)s%(pyminver)s-cp%(pymajver)s%(pyminver)s-manylinux1_x86_64.whl',
         'unpack_sources': False,
         'modulename': 'itk'
         }),
-    ('itk-meshtopolydata', '0.5.1', {
-        'source_tmpl': 'itk_meshtopolydata-%(version)s-cp36-cp36m-manylinux1_x86_64.whl',
+#bumped from 0.5.1 as it does not have a python 3.8 wheel,will need to be tested  twr
+    ('itk-meshtopolydata', '0.6.0', {
+        'source_tmpl': 'itk_meshtopolydata-%(version)s-cp%(pymajver)s%(pyminver)s-cp%(pymajver)s%(pyminver)s-manylinux1_x86_64.whl',
         'unpack_sources': False,
         'modulename': 'itk'
         }),
@@ -208,7 +213,9 @@ exts_list = [
 
 # kernels
 # bash kernel, requires kernel install below, twr
-    ('bash_kernel', '0.7.2'),
+    ('bash_kernel', '0.7.2', {
+        'use_pip': False,
+    }),
 ]
 
 # For Julia packages needed for Jupyter
@@ -235,13 +242,13 @@ prepend-path EBJULIA_ADMIN_LOAD_PATH "%s"
 """ % (_ijulia_depot, _ijulia_depot, _ijulia_projectdir_tcl, _ijulia_projectdir_tcl)
 
 
-# install extensions 
+# install extensions and batchspawner components
 
 postinstallcmds = [
 """
 export YARN_CACHE_FOLDER=/tmp/$USER/yarn_cache && 
 export JUPYTERLAB_DIR=%%(installdir)s/share/jupyter/lab/ && 
-export PYTHONPATH=%%(installdir)s/lib/python3.6/site-packages:$PYTHONPATH && 
+export PYTHONPATH=%%(installdir)s/lib/python%%(pyshortver)s/site-packages:$PYTHONPATH && 
 #export JUPYTER_PATH=%%(installdir)s/share/jupyter/ && 
 export JUPYTER_DATA_DIR=%%(installdir)s/share/jupyter/ && 
 export JULIA_DEPOT_PATH=%%(installdir)s/share/julia/site/ && 
@@ -289,3 +296,5 @@ sanity_check_paths = {
              ]
 }
 
+
+moduleclass = 'tools'
